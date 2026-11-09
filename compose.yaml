@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-iss_tracker}
+      POSTGRES_USER: ${POSTGRES_USER:-iss_tracker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iss_tracker_local}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-iss_tracker}
+      DB_USER: ${POSTGRES_USER:-iss_tracker}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-iss_tracker_local}
+      ISS_API_URL: ${ISS_API_URL:-http://api.open-notify.org/iss-now.json}
+      ISS_POLL_INTERVAL_MS: ${ISS_POLL_INTERVAL_MS:-5000}
+      ISS_CLEANUP_CRON: ${ISS_CLEANUP_CRON:-0 0 0 * * *}
+      ISS_CLEANUP_ZONE: ${ISS_CLEANUP_ZONE:-Asia/Tomsk}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

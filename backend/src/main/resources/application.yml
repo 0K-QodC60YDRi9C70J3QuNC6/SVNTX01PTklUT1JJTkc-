@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: iss-tracker
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/iss_tracker}
+    username: ${DB_USER:iss_tracker}
+    password: ${DB_PASSWORD:iss_tracker_local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+
+iss:
+  api-url: ${ISS_API_URL:http://api.open-notify.org/iss-now.json}
+  poll-interval-ms: ${ISS_POLL_INTERVAL_MS:5000}
+  cleanup-cron: ${ISS_CLEANUP_CRON:0 0 0 * * *}
+  cleanup-zone: ${ISS_CLEANUP_ZONE:Asia/Tomsk}
+
+server:
+  shutdown: graceful
